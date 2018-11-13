@@ -1,11 +1,12 @@
 
-file = 'test.cfg'
+testlist_file = 'part2a_testlist.txt'
+testcfg_file  = 'test.cfg'
 
 dic_config = {}
 test_array = []
 
 class Test:
-	test_description = "des"
+	test_description = ""
 	test_path = ""
 	command = ""
 	pass_phrase = ""
@@ -14,7 +15,7 @@ class Test:
 	retry = 0
 
 def read_config():
-	with open (file, 'r') as F:
+	with open (testcfg_file, 'r') as F:
 		for row in F:
 			if '=' in row:
 				key = row.split("=")[0]
@@ -28,7 +29,11 @@ def parse_testlist(testlist_file):
 	
 	with open (testlist_file, 'r') as f:
 		for row in f:
-			if row.startswith('"'):
+			if row.startswith('$$RUNMODULE'):
+				row_split = row.split(' ')
+				new_testlist = row_split[1].strip()+"_testlist.txt"
+				parse_testlist(new_testlist)
+			elif row.startswith('"'):
 				test = Test()
 				row_split = row.split(',')
 				test.test_description = row_split[0]
@@ -49,12 +54,12 @@ def printing():
 		
 
 
-# calling functions from here	
+######### calling functions from here #############
 
 #read_config()
 		
-parse_testlist('part2b_testlist.txt')
+parse_testlist(testlist_file)
 
-printing()
+#printing()
 	    
     
