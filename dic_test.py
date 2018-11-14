@@ -12,6 +12,9 @@ class Test:
 	fail_phrase = ""
 	timeout = 0
 	retry = 0
+	
+def run_testlist():
+	print ("running")
 
 def read_config():
 	with open (file, 'r') as F:
