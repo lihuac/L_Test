@@ -1,4 +1,6 @@
 
+import re
+
 testlist_file = 'part2a_testlist.txt'
 testcfg_file  = 'test.cfg'
 
@@ -13,9 +15,6 @@ class Test:
 	fail_phrase = ""
 	timeout = 0
 	retry = 0
-	
-def run_testlist():
-	print ("running")
 
 # Test MAIN	
 def main():
@@ -24,6 +23,10 @@ def main():
 	
 	parse_testlist(testlist_file)
 	printing()
+	
+	
+def run_testlist():
+	print ("running")
 	
 def read_config():
 	with open (testcfg_file, 'r') as F:
@@ -49,10 +52,15 @@ def parse_testlist(testlist_file):
 				for i in range(len(row_split)):
 					row_split[i] = row_split[i].strip()
 					# "$$ARG
-					#if row_split[i].startswith('"$$ARG'):
-						print row_split[i]
+					if row_split[i].startswith('"$$ARG'):
+						row_split[i] = re.sub(r'\$\$ARG[0-9]', '', row_split[i])
 					# $MODSPROMPT2 $AURIXPROMPT1 ... get value from dic_config
-					#if row_split[i].
+					if re.search(r'^"\$[A-Z]*[0-9]', row_split[i]):
+						key = re.search(r'\$[A-Z]*[0-9]', row_split[i])
+						key = key.group(0)
+						value = dic_config[key]
+						row_split[i] = value
+						print row_split[i]
 				
 				# update test
 				test.test_description = row_split[0]
