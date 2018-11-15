@@ -1,0 +1,54 @@
+Get Test Path |  | ./get_test_path_cfg.pl | OKOK | NGNG | 5 | 0
+Aurix:  Aurix Reset | ttyUSB3_115200 |  tlfwwdtest 4000 | Shell> |  | 5 | 0
+Aurix:  route UART TO PEX SW 1 | ttyUSB3_115200 | setportexp 2 0 7 0 | Shell> |  | 5 | 0
+Get PEX SW1 Console from cfg file |  | grep 'PEX_SW1=' test.cfg | sed 's/PEX_SW1=//' | sed 's/_[0-9]*//g' > pex_sw1_console.txt |  |  | 1 | 0
+PEX SW 1:  FW Update (1) | ttyUSB15_230400 |  |  |  | 1 | 0
+PEX SW 1:  FW Update (1) | ttyUSB15_230400 | fw_update | Please select file to be transferred |  | 10 | 0
+PEX SW 1:  FW Update (2) |  | sx -b $PEX1FLASHPATH1 > /dev/$(cat pex_sw1_console.txt) < /dev/$(cat pex_sw1_console.txt) |  |  | 1 | 0
+PEX SW 1:  FW Update (1) | ttyUSB15_230400 |  | File transfer successfully! |  | 60 | 0
+Aurix:  route UART TO PEX SW 2 | ttyUSB3_115200 | setportexp 2 0 7 1 | Shell> |  | 5 | 0
+Aurix:  release COM Express Reset CTRL | ttyUSB3_115200 | setportexp 3 1 4 1  | Shell> |  | 5 | 0
+Aurix:  release PEX SW 2 Reset | ttyUSB3_115200 | setportexp 3 0 0 1  |  |  | 5 | 0
+Get PEX SW1 Console from cfg file |  | grep 'PEX_SW1=' test.cfg | sed 's/PEX_SW1=//' | sed 's/_[0-9]*//g' > pex_sw1_console.txt |  |  | 1 | 0
+PEX SW 2:  FW Update (1) | ttyUSB15_230400 |  |  |  | 1 | 0
+PEX SW 2:  FW Update (1) | ttyUSB15_230400 | fw_update | Please select file to be transferred |  | 10 | 0
+PEX SW 2:  FW Update (2) |  | sx -b $PEX2FLASHPATH1 > /dev/$(cat pex_sw1_console.txt) < /dev/$(cat pex_sw1_console.txt) |  |  | 1 | 0
+PEX SW 2:  FW Update (1) | ttyUSB15_230400 |  | File transfer successfully! |  | 60 | 0
+Get Test Path |  | ./get_test_path_cfg.pl | OKOK | NGNG | 5 | 0
+Update dhcpd.conf |  | cp dhcpd_single_tegra.conf /etc/dhcp/dhcpd.conf |  |  | 1 | 0
+Clear DHCP leases |  | rm /var/lib/dhcp/dhcpd.leases |  |  | 1 | 0
+Restart dhcp server |  | service isc-dhcp-server restart |  |  | 1 | 0
+Aurix:  Aurix Reset | ttyUSB3_115200 |  tlfwwdtest 4000 | Shell> |  | 5 | 0
+Aurix:  Power Up Seq 1 | ttyUSB3_115200 | tegrareset x1 h | Shell> |  | 5 | 0
+Aurix:  Power Up Seq 1 | ttyUSB3_115200 | setportexp 3 1 4 1 |  |  | 1 | 0
+Aurix:  Power Up Seq 1 | ttyUSB3_115200 | setportexp 3 0 0 1 |  |  | 1 | 0
+Aurix:  Power Up Seq 1 | ttyUSB3_115200 | tegrareset x1 | Shell> |  | 5 | 0
+TEGRA_A:  Check for Tegra Successful Boot | ttyUSB2_115200 |  | Ubuntu 16.04 LTS tegra-ubuntu  |  | 160 | 2
+SLEEP |  |  |  |  | 1 | 0
+TEGRA_A:  Login Username (1) | ttyUSB2_115200 |  | tegra-ubuntu login: |  | 15 | 0
+TEGRA_A:  Login Username (2) | ttyUSB2_115200 | nvidia | Password: |  | 15 | 0
+TEGRA_A:  Login Password | ttyUSB2_115200 | nvidia | nvidia@tegra-ubuntu: |  | 60 | 0
+TEGRA_A:  Login Super User | ttyUSB2_115200 | sudo su | password for nvidia: |  | 60 | 0
+TEGRA_A:  Login Password | ttyUSB2_115200 | nvidia | root@tegra-ubuntu |  | 15 | 0
+TEGRA_B:  Check for Tegra Successful Boot | ttyUSB6_115200 |  | Ubuntu 16.04 LTS tegra-ubuntu  |  | 160 | 2
+SLEEP |  |  |  |  | 1 | 0
+TEGRA_B:  Login Username (1) | ttyUSB6_115200 |  | tegra-ubuntu login: |  | 15 | 0
+TEGRA_B:  Login Username (2) | ttyUSB6_115200 | nvidia | Password: |  | 15 | 0
+TEGRA_B:  Login Password | ttyUSB6_115200 | nvidia | nvidia@tegra-ubuntu: |  | 60 | 0
+TEGRA_B:  Login Super User | ttyUSB6_115200 | sudo su | password for nvidia: |  | 60 | 0
+TEGRA_B:  Login Password | ttyUSB6_115200 | nvidia | root@tegra-ubuntu |  | 15 | 0
+Tegra:  Configure AQC107(1) | ttyUSB2_115200 | sudo ifconfig enP2p1s0 10.70.0.1 | root@tegra-ubuntu |  | 5 | 0
+Tegra:  Configure AQC107(2) | ttyUSB2_115200 | sudo ethtool -s enP2p1s0 speed 10000 duplex full  | root@tegra-ubuntu |  | 5 | 0
+Tegra:  Configure AQC107(1) | ttyUSB6_115200 | sudo ifconfig enP2p1s0 10.70.0.2 | root@tegra-ubuntu |  | 5 | 0
+Tegra:  Configure AQC107(2) | ttyUSB6_115200 | sudo ethtool -s enP2p1s0 speed 10000 duplex full  |  |  | 3 | 0
+Tegra:  CAN Setup (1) | ttyUSB2_115200 |  ip link set can0 type can bitrate 1000000 dbitrate 2000000 berr-reporting on fd on | root@tegra-ubuntu |  | 5 | 0
+Tegra:  CAN Setup (2) | ttyUSB2_115200 |  ip link set up can0 | root@tegra-ubuntu |  | 5 | 0
+Tegra:  CAN Setup (3) | ttyUSB2_115200 |  ip link set can1 type can bitrate 1000000 dbitrate 2000000 berr-reporting on fd on | root@tegra-ubuntu |  | 5 | 0
+Tegra:  CAN Setup (4) | ttyUSB2_115200 |  ip link set up can1 | root@tegra-ubuntu |  | 5 | 0
+Aurix:  Disable recovery to allow USB testing | ttyUSB3_115200 |  tegrarecovery x1 off | Shell> |  | 5 | 0
+Tegra A:  Change to Test Directory | ttyUSB2_115200 | cd /root/embedded/diags/diag_scripts | root@tegra-ubuntu |  | 4 | 0
+Tegra B:  Change to Test Directory | ttyUSB6_115200 | cd /root/embedded/diags/diag_scripts | root@tegra-ubuntu |  | 4 | 0
+Tegra B:  Run Test | ttyUSB6_115200 | ./run_diags.sh E3550-B02B-part2-1_testlist | tee tegra_b_test.log |  |  | 1 | 0
+Tegra A:  Run Test | ttyUSB2_115200 | ./run_diags.sh E3550-B02A-part2_testlist | Embedded Diags Testing PASS | Embedded Diags Testing FAIL | 1800 | 0
+Tegra B:  Wait for Test Completion | ttyUSB6_115200 |  | root@tegra-ubuntu |  | 300 | 0
+Tegra B:  Tegra Test Result | ttyUSB6_115200 | cat tegra_b_test.log | Embedded Diags Testing PASS | Embedded Diags Testing FAIL | 15 | 0
