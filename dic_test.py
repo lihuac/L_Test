@@ -20,8 +20,8 @@ class Test:
 def main():
 	read_config()
 	#printing_testcfg()
-	
-	parse_testlist(testlist_file)
+	tmp = ''
+	parse_testlist(testlist_file, tmp)
 	printing()
 	
 	
@@ -38,14 +38,17 @@ def read_config():
 				value = row.split("=")[1].strip()
 				dic_config[key] = value
 
-def parse_testlist(testlist_file):
+def parse_testlist(testlist_file, tmp):
 	with open (testlist_file, 'r') as f:
 		for row in f:
 			# use $$RUNMODULE to get tests from another testlist file
 			if row.startswith('$$RUNMODULE'):
 				row_split = row.split(' ')
 				new_testlist = row_split[1].strip()+"_testlist.txt"
-				parse_testlist(new_testlist)
+				if len(row_split)>2:
+					parse_testlist(new_testlist, row_split[2].strip())
+				else:
+					parse_testlist(new_testlist, tmp)
 			
 			# add test items to test_array
 			elif row.startswith('"'):
@@ -55,7 +58,7 @@ def parse_testlist(testlist_file):
 					row_split[i] = row_split[i].strip()
 					# "$$ARG
 					if row_split[i].startswith('"$$ARG'):
-						row_split[i] = re.sub(r'\$\$ARG[0-9]', '', row_split[i])
+						row_split[i] = re.sub(r'\$\$ARG[0-9]', tmp, row_split[i])
 					# $MODSPROMPT2 $AURIXPROMPT1 ... get value from dic_config
 					if re.search(r'^"\$[A-Z]*[0-9]', row_split[i]):
 						key = re.search(r'\$[A-Z]*[0-9]', row_split[i])
