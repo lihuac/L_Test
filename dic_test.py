@@ -31,6 +31,8 @@ def run_testlist():
 def read_config():
 	with open (testcfg_file, 'r') as F:
 		for row in F:
+			if '#' in row:
+				continue
 			if '=' in row:
 				key = row.split("=")[0].strip()		# strip() for delete '\n' and space ...
 				value = row.split("=")[1].strip()
@@ -60,18 +62,19 @@ def parse_testlist(testlist_file):
 						key = key.group(0)
 						value = dic_config[key]
 						row_split[i] = value
-						print row_split[i]
 				
 				# update test
-				test.test_description = row_split[0]
-				test.test_path = row_split[1]
-				test.command = row_split[2]
-				test.pass_phrase = row_split[3]
-				test.fail_phrase = row_split[4]
+				test.test_description = row_split[0].replace("\"","")
+				tmp_path = row_split[1].replace("\"","")
+				if tmp_path in dic_config:
+					test.test_path = dic_config[tmp_path]
+				test.command = row_split[2].replace("\"","")
+				test.pass_phrase = row_split[3].replace("\"","")
+				test.fail_phrase = row_split[4].replace("\"","")
 				if len(row_split) > 5:
-					test.timeout = row_split[5]
+					test.timeout = row_split[5].replace("\"","")
 				if len(row_split) > 6:
-					test.retry = row_split[6]
+					test.retry = row_split[6].replace("\"","")
 				test_array.append(test)
 			
 	
