@@ -10,7 +10,8 @@ serial_number = '1234567'
 testcfg_file  = 'test.cfg'
 templogfile   = 'temp.log'
 directory     = 'log'
-test_time     = str(datetime.datetime.now())[:19]
+test_start    = datetime.datetime.now()
+test_time     = str(test_start)[:19]
 SERIAL_CMD    = 1
 LINUX_CMD     = 0
 
@@ -31,7 +32,6 @@ class Test:
 
 # Test MAIN	
 def main():
-	#create_log_dir(directory)
 	read_config()
 	#printing_testcfg()
 	tmp = ''
@@ -40,7 +40,9 @@ def main():
 	#create_sn_file()
 	initiate_logging()
 	run_testlist()
-	LOG.close()
+	print_result(0)
+	#print_test_duration()
+	mv_log()
 	
 
 #	my $status = check_result($test_item[$line]{'test_description'},
@@ -71,9 +73,11 @@ def execute_linux_cmd(test_index):
 		status = check_result(test_index, LINUX_CMD, 2)
 		
 	print ("linux: " + path+" " +cmd)
+	return 0
 	
 def execute_serial_cmd(test_index):
 	console_log_print("Serial Test for test item " + str(test_index) + "\n\n")
+	return 0
 
 def check_result(index, cmd_type, ref_port):
 	name       = test_array[index].test_description
@@ -141,6 +145,7 @@ def check_result(index, cmd_type, ref_port):
 	
 	
 def run_testlist():
+	status = 1
 	for i in range(len(test_array)):
 		#print i
 		console_log_print("################################################################\n");	
@@ -150,10 +155,13 @@ def run_testlist():
 		console_log_print("################################################################\n");
 		# ttyUSB
 		if "ttyUSB" in test_array[i].test_path:
-			execute_serial_cmd(i)
+			status = execute_serial_cmd(i)
 			
 		else:
-			execute_linux_cmd(i)
+			status = execute_linux_cmd(i)
+		if status == 1
+			break
+	return status
 			
 def init_serial_port(test_index):
 	path = test_array[test_index].test_path
@@ -178,7 +186,12 @@ def initiate_logging():
 	console_log_print ("#########################################################################\n");	
 	console_log_print ("       Board Serial Number: " + serial_number + "                                        \n");
 	console_log_print ("       Test Date and Time:  " + test_time +"                         \n");
-	
+
+def print_test_duration():
+	#time.sleep(3)
+	test_end_time = datetime.datetime.now()
+	test_duration = test_end_time - test_start
+	console_log_print("Test Time: " + (str(test_duration)[:7]))	
 	
 def console_log_print(log):
 	LOG.write(log)
@@ -186,8 +199,7 @@ def console_log_print(log):
 	
 def create_log_dir(directory):
 	if not os.path.exists(directory):
-		os.makedirs(directory)
-	
+		os.makedirs(directory)	
 
 def read_config():
 	with open (testcfg_file, 'r') as F:
@@ -241,8 +253,47 @@ def parse_testlist(testlist_file, tmp):
 					test.retry = row_split[6].replace("\"","")
 				test_array.append(test)
 			
+def mv_log():
+	LOG.close()
+	create_log_dir('log')
+	logfile = determine_log_fliename(0);
+	os.rename("temp.log", "./log/"+str(logfile))
 	
-		
+def determine_log_fliename(final_result):
+	res = str(datetime.datetime.now())[17:]+".txt"
+	print res
+	return res
+
+def print_result(test_result):
+	if (test_result):
+		console_log_print("TEST FAILED!\n")
+		#console_log_print("{{N:FAIL}}\n")
+		console_log_print("\n"+
+		"            #######      ####     ########   ###\n"+
+		"            #######     ######    ########   ###\n"+
+		"            ##         ##    ##      ##      ###\n"+
+		"            ##         ##    ##      ##      ###\n"+
+		"            #######    ########      ##      ###\n"+
+		"            #######    ########      ##      ###\n"+
+		"            ##         ##    ##      ##      ###\n"+
+		"            ##         ##    ##   ########   ########\n"+
+		"            ##         ##    ##   ########   ########\n")  #,'bright_white on_red'
+		console_log_print("\n")
+	else:
+		console_log_print("TEST PASSED!\n")
+		#console_log_print("{{N:PASS}}\n")
+		console_log_print("\n"+
+		"            #######      ####      ######     ######\n"+
+		"            ########    ######    ########   ########\n"+
+		"            ##    ##   ##    ##   ##     #   ##     #\n"+
+		"            ##    ##   ##    ##    ###        ###\n"+
+		"            ########   ########     ####       ####\n"+
+		"            #######    ########       ###        ###\n"+
+		"            ##         ##    ##   #     ##   #     ##\n"+
+		"            ##         ##    ##   ########   ########\n"+
+		"            ##         ##    ##    ######     ######\n")	#,'bright_white on_green'
+		console_log_print("\n")
+	
 def printing():
 	for i in range(len(test_array)):
 		print('{0} | {1} | {2} | {3} | {4} | {5} | {6}'.format(test_array[i].test_description, test_array[i].test_path, test_array[i].command, test_array[i].pass_phrase, test_array[i].fail_phrase, test_array[i].timeout, test_array[i].retry))
