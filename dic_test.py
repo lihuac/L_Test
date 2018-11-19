@@ -1,22 +1,26 @@
-#import serial
+import serial
 import re
 import os
 import datetime
 import time
 import subprocess
 
-testlist_file = 'part2a_testlist.txt'
+#testlist_file = 'part2a_testlist.txt'
+testlist_file = 'part6_testlist.txt'
 serial_number = '1234567'
 testcfg_file  = 'test.cfg'
 templogfile   = 'temp.log'
 directory     = 'log'
 test_start    = datetime.datetime.now()
 test_time     = str(test_start)[:19]
+final_result  = 1					    # initial fail
 SERIAL_CMD    = 1
 LINUX_CMD     = 0
+cwd           = os.getcwd()
 
 dic_config    = {}
 test_array    = []
+port_array    = []
 
 LOG           = open(templogfile, "w")
 
@@ -40,108 +44,128 @@ def main():
 	#create_sn_file()
 	initiate_logging()
 	run_testlist()
-	print_result(0)
-	#print_test_duration()
+	print_result()
+	print_test_duration()
 	mv_log()
-	
-
-#	my $status = check_result($test_item[$line]{'test_description'},
-#							  $test_item[$line]{'pass_phrase'}, 
-#							  $test_item[$line]{'fail_phrase'}, 
-#							  $test_item[$line]{'timeout'},1, \$port{$testpath});
 
 	
 def execute_linux_cmd(test_index):
 	console_log_print("Linux Test for test item " + str(test_index) + "\n\n")
-	return
 	path = test_array[test_index].test_path
-	cmd = test_array[test_index].command
+	cmd  = test_array[test_index].command
 	status = 1
 	print "start linux command"
 	if path != '':
-		# change directory
 		print "change directory"
+		os.chdir(path)
 	if cmd != '':
-		# cmd
-		cmd = 'dir'
-		print "command is "+cmd
-		res = ''
-		res = subprocess.check_result(cmd)
-		print "res is " + res
-		#status = check_result(test_index, LINUX_CMD, 0)
+		p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+		status = check_result(test_index, LINUX_CMD, p)
 	else:
-		status = check_result(test_index, LINUX_CMD, 2)
+		#status = check_result(test_index, LINUX_CMD, 2)
 		
 	print ("linux: " + path+" " +cmd)
 	return 0
 	
 def execute_serial_cmd(test_index):
 	console_log_print("Serial Test for test item " + str(test_index) + "\n\n")
-	return 0
+	ser = init_serial_port(test_index)
+	msg = test_array[test_index].command+"\n"
+	ser.write(msg)
+	time.sleep(30)
+	result = check_result(test_index, SERIAL_CMD, ser)
+	return result
+
+def close_ports():
+	for i in range(len(port_array)):
+		port_array[i].close()
+	
+def init_serial_port(test_index):
+	path = test_array[test_index].test_path
+	tmp = path.split('_')
+	path = "/dev/"+tmp[0]
+	for i in range(len(port_array)):
+		if path == port_array[i].name:
+			return port_array[i]
+	speed = int(tmp[1])
+	ser = serial.Serial(
+		port=path, 
+		baudrate=speed, 
+		parity=serial.PARITY_NONE,
+		stopbits=serial.STOPBITS_ONE,
+		bytesize=serial.EIGHTBITS,
+		rtscts=False
+	)
+	port_array.append(ser)
+	return ser
 
 def check_result(index, cmd_type, ref_port):
-	name       = test_array[index].test_description
-	pass_word  = test_array[index].pass_phrase
-	fail_word  = test_array[index].fail_phrase
-	time_out   = test_array[index].time_out
-	retry_time = test_array[index].retry
-	result      = 0
-	res_content = ''
-	output      = ''
-	while(retry_time >= 0):
-		start_time      = datetime.datetime.now()
-		start_seconds   = time.mktime(start_time.timetuple())
-		current_time    = datetime.datetime.now()
-		current_seconds = time.mktime(current_time.timetuple())
-		while(1):							# 
-			if time_out > 0 and current_seconds-start_seconds > time_out:
-				print "time over"
-				console_log_print("TIMEOUT")
-				break
-			time.sleep(1)
-			
-			if cmd_type == SERIAL_CMD:		# serial port command
-				print "serial"
-				#_____ update res_content here
-				
-			elif cmd_type == LINUX_CMD:		# linux port command
-				print "linux"
-				#_____ update res_content here
-			else:
-				print "wrong cmd type"
-				
-			output = output + res_content
-			console_log_print(res_content)
-		
-			if pass_word != '':
-				if pass_word in output:
-					result = 1
-					break
-			
-			if fail_word != '':
-				if fail_word in output:
-					time_out = 0
-					break
-					
-			current_time = datetime.datetime.now()
-			current_seconds = time.mktime(current_time.timetuple())
-			# Ending ...
-		if result == 1:
+	name          = test_array[index].test_description
+	pass_word     = test_array[index].pass_phrase
+	fail_word     = test_array[index].fail_phrase
+	time_out      = test_array[index].time_out
+	retry_time    = test_array[index].retry
+	temp          = ''
+	output        = ''
+	isTestTimeOut = True
+	pass_test     = 0
+	ser           = ref_port
+	test_start = time.time()
+	test_cur = time.time()
+	while(1):
+		if time_out>0 and test_cur - test_start > time_out:
 			break
-		console_log_print("NONO Retrying...");
-		console_log_print("Remaining Retry: "+ retry_time +"\n\n");
-		retry_time = retry_time - 1
-		# Ending retry ...
-	
+		time.sleep(1)
+		
+		if cmd_type == SERIAL_CMD:
+			temp = ''
+			reading = (str(ser.read(255)))
+			if reading
+				temp = reading
+			
+			
+		if cmd_type == LINUX_CMD and ser!=0:
+			temp = ''
+			reading = ser.stdout.read(255)
+			if reading !='':
+				temp = reading
+		
+		
+		output = output + temp
+		console_log_print(temp)
+		
+		if pass_word != '':
+			if pass_word in output:
+				pass_test = 1
+				break
+		else:
+			pass_test = 1
+			
+		if fail_word != '':
+			if fail_word in output:
+				pass_test = 0
+				isTestTimeOut = False
+				break
+				
+		test_cur = time.time()
+		
 	console_log_print("\n################################################################\n");	
 	console_log_print(" " + name + " RESULT:\n");
 	console_log_print("################################################################\n");
-	if result == 1:
-		console_log_print("OKOK\n")
-		return 0
+	
+	if pass_test == 1:
+		console_log_print("OKOK\n");
+		return 0;
 	else:
-		console_log_print("NONO\n")
-		return 1
+		retry_time = retry_time - 1
+		if isTestTimeOut:
+			console_log_print("TIMEOUT");
+		console_log_print("NGNG\n");
+		if retry_time == 0:
+			return 1
+		console_log_print("Retrying...");
+		console_log_print("Remaining Retry: $retry\n\n");
+		return 2;  #return 2 means retry
 	
 	
 def run_testlist():
@@ -155,25 +179,23 @@ def run_testlist():
 		console_log_print("################################################################\n");
 		# ttyUSB
 		if "ttyUSB" in test_array[i].test_path:
-			status = execute_serial_cmd(i)
+			while(1):
+				status = execute_serial_cmd(i)
+				if status != 2:
+					break
 			
 		else:
-			status = execute_linux_cmd(i)
-		if status == 1
+			while(1):
+				status = execute_linux_cmd(i)
+				if status != 2:
+					break
+					
+		if status == 1:		# run on error
 			break
-	return status
 			
-def init_serial_port(test_index):
-	path = test_array[test_index].test_path
-	ser = serial.Serial(
-		port='/dev/ttyUSB0', 
-		baudrate=115200, 
-		#timeout=1,
-		parity=serial.PARITY_NONE,
-		stopbits=serial.STOPBITS_ONE,
-		bytesize=serial.EIGHTBITS,
-		rtscts=False
-	)
+	final_result = status
+			
+
 	
 def create_sn_file():
 	sn_filename = 'sn.txt'
@@ -257,14 +279,16 @@ def mv_log():
 	LOG.close()
 	create_log_dir('log')
 	logfile = determine_log_fliename(0);
-	os.rename("temp.log", "./log/"+str(logfile))
+	loglocation = "./log/"+str(logfile)
+	os.rename("temp.log", loglocation)
+	print "Log file location: "+loglocation
 	
 def determine_log_fliename(final_result):
 	res = str(datetime.datetime.now())[17:]+".txt"
-	print res
 	return res
 
-def print_result(test_result):
+def print_result():
+	test_result = final_result
 	if (test_result):
 		console_log_print("TEST FAILED!\n")
 		#console_log_print("{{N:FAIL}}\n")
