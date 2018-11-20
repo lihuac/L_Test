@@ -62,7 +62,7 @@ def execute_linux_cmd(test_index):
 		p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 		status = check_result(test_index, LINUX_CMD, p)
 	else:
-		#status = check_result(test_index, LINUX_CMD, 2)
+		status = check_result(test_index, LINUX_CMD, 0)
 		
 	print ("linux: " + path+" " +cmd)
 	return 0
@@ -120,7 +120,7 @@ def check_result(index, cmd_type, ref_port):
 		if cmd_type == SERIAL_CMD:
 			temp = ''
 			reading = (str(ser.read(255)))
-			if reading
+			if len(reading)>0:
 				temp = reading
 			
 			
