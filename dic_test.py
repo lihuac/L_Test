@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import serial
 import re
 import os
@@ -6,7 +8,7 @@ import time
 import subprocess
 
 #testlist_file = 'part2a_testlist.txt'
-testlist_file = 'part6_testlist.txt'
+testlist_file = 'part7_testlist.txt'
 serial_number = '1234567'
 testcfg_file  = 'test.cfg'
 templogfile   = 'temp.log'
@@ -72,7 +74,7 @@ def execute_serial_cmd(test_index):
 	ser = init_serial_port(test_index)
 	msg = test_array[test_index].command+"\n"
 	ser.write(msg)
-	time.sleep(30)
+	#time.sleep(30)
 	result = check_result(test_index, SERIAL_CMD, ser)
 	return result
 
@@ -94,6 +96,7 @@ def init_serial_port(test_index):
 		parity=serial.PARITY_NONE,
 		stopbits=serial.STOPBITS_ONE,
 		bytesize=serial.EIGHTBITS,
+		timeout=1,
 		rtscts=False
 	)
 	port_array.append(ser)
@@ -103,7 +106,7 @@ def check_result(index, cmd_type, ref_port):
 	name          = test_array[index].test_description
 	pass_word     = test_array[index].pass_phrase
 	fail_word     = test_array[index].fail_phrase
-	time_out      = test_array[index].time_out
+	time_out      = int(test_array[index].timeout)
 	retry_time    = test_array[index].retry
 	temp          = ''
 	output        = ''
@@ -113,13 +116,13 @@ def check_result(index, cmd_type, ref_port):
 	test_start = time.time()
 	test_cur = time.time()
 	while(1):
-		if time_out>0 and test_cur - test_start > time_out:
+		if time_out > 0 and test_cur - test_start > time_out:
 			break
-		time.sleep(1)
+		#time.sleep(1)
 		
 		if cmd_type == SERIAL_CMD:
 			temp = ''
-			reading = (str(ser.read(255)))
+			reading = (str(ser.readline()))
 			if len(reading)>0:
 				temp = reading
 			
@@ -138,8 +141,13 @@ def check_result(index, cmd_type, ref_port):
 			if pass_word in output:
 				pass_test = 1
 				break
+			#if re.search(r"Firmware Version*\s+Major \d{2}\. Minor \d{2}. type \d\. Build [A-Z]\d{2}\.", output):
+			#if re.search(r"Firmware Version*\s+Major \d{2}\. Minor \d{2}. type \d\. Build [A-Z]\d{2}\.", output):
+			#	pass_test = 1
+			#	break
 		else:
 			pass_test = 1
+			
 			
 		if fail_word != '':
 			if fail_word in output:
@@ -252,14 +260,16 @@ def parse_testlist(testlist_file, tmp):
 				for i in range(len(row_split)):
 					row_split[i] = row_split[i].strip()
 					# "$$ARG
-					if row_split[i].startswith('"$$ARG'):
+					if re.search('\$\$ARG', row_split[i]):
 						row_split[i] = re.sub(r'\$\$ARG[0-9]', tmp, row_split[i])
 					# $MODSPROMPT2 $AURIXPROMPT1 ... get value from dic_config
-					if re.search(r'^"\$[A-Z]*[0-9]', row_split[i]):
-						key = re.search(r'\$[A-Z]*[0-9]', row_split[i])
+					if re.search(r'\$[A-Z]*[0-9]*[A-Z]*[0-9]', row_split[i]):
+						#print(row_split[i])
+						key = re.search(r'\$[A-Z]*[0-9]*[A-Z]*[0-9]', row_split[i])
 						key = key.group(0)
 						value = dic_config[key]
-						row_split[i] = value
+						#row_split[i] = value
+						row_split[i] = re.sub(r'\$[A-Z]*[0-9]*[A-Z]*[0-9]', value, row_split[i])
 				
 				# update test
 				test.test_description = row_split[0].replace("\"","")
