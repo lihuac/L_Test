@@ -13,6 +13,7 @@ serial_number = '1234567'
 testcfg_file  = 'test.cfg'
 templogfile   = 'temp.log'
 directory     = 'log'
+lastlog       = ''
 test_start    = datetime.datetime.now()
 test_time     = str(test_start)[:19]
 final_result  = 1					    # initial fail
@@ -178,7 +179,9 @@ def check_result(index, cmd_type, ref_port):
 	
 def run_testlist():
 	status = 1
+	lastlogfile = 'last.log'
 	for i in range(len(test_array)):
+		lastlog = ''
 		#print i
 		console_log_print("################################################################\n");	
 		console_log_print(test_array[i].test_description + " search for:  " +
@@ -200,6 +203,10 @@ def run_testlist():
 					
 		if status == 1:		# run on error
 			break
+		
+		LAST_LOG    = open(lastlogfile, "w")
+		LAST_LOG.write(lastlog)
+		LAST_LOG.close()
 			
 	final_result = status
 			
@@ -225,6 +232,7 @@ def print_test_duration():
 	
 def console_log_print(log):
 	LOG.write(log)
+	lastlog = lastlog+log
 	print (log)
 	
 def create_log_dir(directory):
