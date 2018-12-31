@@ -19,6 +19,7 @@ test_time     = str(test_start)[:19]
 final_result  = 1					    # initial fail
 SERIAL_CMD    = 1
 LINUX_CMD     = 0
+retry_time    = 0
 cwd           = os.getcwd()
 
 dic_config    = {}
@@ -50,7 +51,6 @@ def main():
 	print_result()
 	print_test_duration()
 	mv_log()
-
 	
 def execute_linux_cmd(test_index):
 	console_log_print("Linux Test for test item " + str(test_index) + "\n\n")
@@ -108,7 +108,7 @@ def check_result(index, cmd_type, ref_port):
 	pass_word     = test_array[index].pass_phrase
 	fail_word     = test_array[index].fail_phrase
 	time_out      = int(test_array[index].timeout)
-	retry_time    = test_array[index].retry
+	#retry_time    = test_array[index].retry
 	temp          = ''
 	output        = ''
 	isTestTimeOut = True
@@ -139,7 +139,8 @@ def check_result(index, cmd_type, ref_port):
 		console_log_print(temp)
 		
 		if pass_word != '':
-			if pass_word in output:
+			#if pass_word in output:
+			if re.search(pass_word, output):
 				pass_test = 1
 				break
 			#if re.search(r"Firmware Version*\s+Major \d{2}\. Minor \d{2}. type \d\. Build [A-Z]\d{2}\.", output):
@@ -166,6 +167,7 @@ def check_result(index, cmd_type, ref_port):
 		console_log_print("OKOK\n");
 		return 0;
 	else:
+		global retry_time
 		retry_time = retry_time - 1
 		if isTestTimeOut:
 			console_log_print("TIMEOUT");
@@ -182,11 +184,13 @@ def run_testlist():
 	lastlogfile = 'last.log'
 	for i in range(len(test_array)):
 		lastlog = ''
+		global retry_time
+		retry_time = test_array[i].retry
 		#print i
 		console_log_print("################################################################\n");	
 		console_log_print(test_array[i].test_description + " search for:  " +
 		                  "\"" +test_array[i].pass_phrase + "\" in " +
-		                  test_array[i].timeout + " seconds.\n");
+		                  str(test_array[i].timeout) + " seconds.\n");
 		console_log_print("################################################################\n");
 		# ttyUSB
 		if "ttyUSB" in test_array[i].test_path:
@@ -232,6 +236,7 @@ def print_test_duration():
 	
 def console_log_print(log):
 	LOG.write(log)
+	global lastlog 
 	lastlog = lastlog+log
 	print (log)
 	
@@ -288,9 +293,12 @@ def parse_testlist(testlist_file, tmp):
 				test.pass_phrase = row_split[3].replace("\"","")
 				test.fail_phrase = row_split[4].replace("\"","")
 				if len(row_split) > 5:
-					test.timeout = row_split[5].replace("\"","")
+					#print(row_split[5])
+					#print(row_split[0])
+					test.timeout = float( row_split[5].replace("\"","") )
 				if len(row_split) > 6:
-					test.retry = row_split[6].replace("\"","")
+					#print(row_split[6])
+					test.retry = int( row_split[6].replace("\"","") )
 				test_array.append(test)
 			
 def mv_log():
@@ -338,7 +346,7 @@ def print_result():
 	
 def printing():
 	for i in range(len(test_array)):
-		print('{0} | {1} | {2} | {3} | {4} | {5} | {6}'.format(test_array[i].test_description, test_array[i].test_path, test_array[i].command, test_array[i].pass_phrase, test_array[i].fail_phrase, test_array[i].timeout, test_array[i].retry))
+		print('{0} | {1} | {2} | {3} | {4} | {5} | {6} | {7}'.format(i, test_array[i].test_description, test_array[i].test_path, test_array[i].command, test_array[i].pass_phrase, test_array[i].fail_phrase, test_array[i].timeout, test_array[i].retry))
 		
 def printing_testcfg():
 	print dic_config
