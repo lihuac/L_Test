@@ -7,11 +7,12 @@ import datetime
 import time
 import subprocess
 
-#testlist_file = 'part2a_testlist.txt'
-testlist_file = 'part7_testlist.txt'
+testlist_file = 'l_testlist.txt'
+#testlist_file = 'part7_testlist.txt'
 serial_number = '1234567'
 testcfg_file  = 'test.cfg'
 templogfile   = 'temp.log'
+templastlogfile = 'templast.log'
 directory     = 'log'
 lastlog       = ''
 test_start    = datetime.datetime.now()
@@ -27,6 +28,7 @@ test_array    = []
 port_array    = []
 
 LOG           = open(templogfile, "w")
+TEMP_LAST_LOG = open(templastlogfile, "w")
 
 
 class Test:
@@ -181,11 +183,15 @@ def check_result(index, cmd_type, ref_port):
 	
 def run_testlist():
 	status = 1
-	lastlogfile = 'last.log'
+	templastlogfile = 'templast.log'
+	global TEMP_LAST_LOG
+	TEMP_LAST_LOG.close()
 	for i in range(len(test_array)):
 		lastlog = ''
 		global retry_time
+		TEMP_LAST_LOG = open(templastlogfile, "w")
 		retry_time = test_array[i].retry
+		
 		#print i
 		console_log_print("################################################################\n");	
 		console_log_print(test_array[i].test_description + " search for:  " +
@@ -208,10 +214,14 @@ def run_testlist():
 		if status == 1:		# run on error
 			break
 		
-		LAST_LOG    = open(lastlogfile, "w")
-		LAST_LOG.write(lastlog)
-		LAST_LOG.close()
-			
+		TEMP_LAST_LOG.close()
+		#LAST_LOG    = open(lastlogfile, "w")
+		#LAST_LOG.write(lastlog)
+		#LAST_LOG.close()
+		
+		os.rename("templast.log", "last.log")
+	
+	global final_result
 	final_result = status
 			
 
@@ -236,8 +246,11 @@ def print_test_duration():
 	
 def console_log_print(log):
 	LOG.write(log)
-	global lastlog 
-	lastlog = lastlog+log
+	#global lastlog 
+	#lastlog = lastlog+log
+	
+	if not TEMP_LAST_LOG.closed:
+		TEMP_LAST_LOG.write(log)
 	print (log)
 	
 def create_log_dir(directory):
