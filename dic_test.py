@@ -251,7 +251,9 @@ def console_log_print(log):
 	
 	if not TEMP_LAST_LOG.closed:
 		TEMP_LAST_LOG.write(log)
-	print (log)
+	#print (log)
+	if log != "\n":
+		print (log)
 	
 def create_log_dir(directory):
 	if not os.path.exists(directory):
