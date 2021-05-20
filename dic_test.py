@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 import serial
 import re
 import os
@@ -7,7 +7,7 @@ import datetime
 import time
 import subprocess
 
-testlist_file = 'l_testlist.txt'
+testlist_file = 'lh_testlist.txt'
 #testlist_file = 'part7_testlist.txt'
 serial_number = '1234567'
 testcfg_file  = 'test.cfg'
@@ -59,9 +59,9 @@ def execute_linux_cmd(test_index):
 	path = test_array[test_index].test_path
 	cmd  = test_array[test_index].command
 	status = 1
-	print "start linux command"
+	print ("start linux command")
 	if path != '':
-		print "change directory"
+		print ("change directory")
 		os.chdir(path)
 	if cmd != '':
 		p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
@@ -70,7 +70,7 @@ def execute_linux_cmd(test_index):
 		status = check_result(test_index, LINUX_CMD, 0)
 		
 	print ("linux: " + path+" " +cmd)
-	return 0
+	return status
 	
 def execute_serial_cmd(test_index):
 	console_log_print("Serial Test for test item " + str(test_index) + "\n\n")
@@ -177,7 +177,7 @@ def check_result(index, cmd_type, ref_port):
 		if retry_time == 0:
 			return 1
 		console_log_print("Retrying...");
-		console_log_print("Remaining Retry: $retry\n\n");
+		console_log_print("Remaining Retry: "+str(retry_time));
 		return 2;  #return 2 means retry
 	
 	
@@ -251,9 +251,7 @@ def console_log_print(log):
 	
 	if not TEMP_LAST_LOG.closed:
 		TEMP_LAST_LOG.write(log)
-	#print (log)
-	if log != "\n":
-		print (log)
+	print (log, end = " ")
 	
 def create_log_dir(directory):
 	if not os.path.exists(directory):
@@ -322,7 +320,7 @@ def mv_log():
 	logfile = determine_log_fliename(0);
 	loglocation = "./log/"+str(logfile)
 	os.rename("temp.log", loglocation)
-	print "Log file location: "+loglocation
+	print ("Log file location: "+loglocation)
 	
 def determine_log_fliename(final_result):
 	res = str(datetime.datetime.now())[17:]+".txt"
@@ -364,6 +362,6 @@ def printing():
 		print('{0} | {1} | {2} | {3} | {4} | {5} | {6} | {7}'.format(i, test_array[i].test_description, test_array[i].test_path, test_array[i].command, test_array[i].pass_phrase, test_array[i].fail_phrase, test_array[i].timeout, test_array[i].retry))
 		
 def printing_testcfg():
-	print dic_config
+	print (dic_config)
 
 main()
